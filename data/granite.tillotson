@@ -1,0 +1,18 @@
+# This is a Tillotson parameters file for
+# GRANITE
+[Tillostson]
+    Rho0  = 2.658e3
+    BulkA   = 1.8e10
+    BulkB   = 1.8e10
+    E0    = 1.6e7
+    Ta   = 0.50
+    Tb   = 1.30
+    Alpha = 5.0
+    Beta  = 5.0
+    Eiv   = 3.50e6
+    Ecv   = 1.80e7
+
+[ColdEnergy]
+    Tref    = 293.0
+    Cv      = 7.9e2
+    RhoStep = 3001
