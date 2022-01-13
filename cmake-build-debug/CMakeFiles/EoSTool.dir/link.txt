@@ -1,1 +1,0 @@
-/usr/bin/cc -g CMakeFiles/EoSTool.dir/main.c.o CMakeFiles/EoSTool.dir/third_party/InputParser.c.o CMakeFiles/EoSTool.dir/eos_state.c.o CMakeFiles/EoSTool.dir/test.c.o -o EoSTool  -lm 

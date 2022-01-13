@@ -1,3 +1,0 @@
-/home/huacheng/Documents/Github/EoSTool/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/huacheng/Documents/Github/EoSTool/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/huacheng/Documents/Github/EoSTool/cmake-build-debug/CMakeFiles/EoSTool.dir
