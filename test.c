@@ -4,15 +4,24 @@
 
 #include "test.h"
 
-int test_aneos(FILE * output)
+
+int test_aneos(FILE * output, const char * aname, int correct)
 {
     // an example for aneos
     struct ANEOSTable eos_test;
-    FILE * fp = fopen("../data/granit2.aneos","r");
+    FILE * fp = fopen(aname,"r");
     LoadANEOS(&eos_test,fp);
 
-
-    ANEOSInterpolateTD(&eos_test,2000,10000,ANEOSPRE);
+//    double t = ANEOSInterpolateTP(&eos_test,293,1.0,-1);
+    switch (correct) {
+        case WITHOUTCORRECT:
+            break;
+        case CONSTSHIFT:
+            ANEOSLowDenCorrect(&eos_test,10.0);
+            break;
+        default:
+            break;
+    }
 
     for(int k=0;k<21;k++)
     {
@@ -23,17 +32,17 @@ int test_aneos(FILE * output)
             double rPre = ANEOSInterpolateTD(&eos_test,jTmp,kDen,ANEOSPRE);
             fprintf(output,"%13.5e,",rPre);
         }
-        fprintf(output,"\n\n");
+        fprintf(output,"\n");
     }
 
     UnAllocateANEOS(&eos_test);
     return 0;
 }
 
-int test_tillotson(FILE * output)
+int test_tillotson(FILE * output,const char * tname)
 {
     struct TillotsonTable eos_test;
-    FILE * fp = fopen("../data/granite.tillotson","r");
+    FILE * fp = fopen(tname,"r");
     LoadTillEOS(&eos_test,fp);
 
     double check = TillEOSInterpolateTD(&eos_test,1500,300,ANEOSPRE);
@@ -80,3 +89,40 @@ void test_pressure(struct ANEOSTable * _a,FILE * output,char * fmt, int lines)
         fprintf(output,"\n");
     }
 }
+
+void test_pressure_example()
+{
+    test_aneos(stdout,"../data/granit2.aneos",CONSTSHIFT);
+    struct ANEOSTable eos_test;
+    FILE * fp = fopen("../data/granit2.aneos","r");
+    LoadANEOS(&eos_test,fp);
+    FILE * out = fopen("granit2.pre","w");
+
+    test_pressure(&eos_test,out,"%12.5e,",20);
+
+    UnAllocateANEOS(&eos_test);
+    fclose(out);
+}
+
+
+void generate_aneos(const char * aname, int correct, const char * cname, const char *comment)
+{
+    // an example for aneos
+    struct ANEOSTable eos_test;
+    FILE * fp = fopen(aname,"r");
+    LoadANEOS(&eos_test,fp);
+
+    switch (correct) {
+        case WITHOUTCORRECT:
+            break;
+        case CONSTSHIFT:
+            ANEOSLowDenCorrect(&eos_test,10.0);
+            break;
+        default:
+            break;
+    }
+
+    ANEOSWrite(&eos_test,cname,comment);
+    UnAllocateANEOS(&eos_test);
+}
+

@@ -32,6 +32,8 @@ struct ANEOSTable
 #define ANEOSPRE 1
 #define ANEOSCSD 2
 
+#define WITHOUTCORRECT 0
+#define CONSTSHIFT 1
 
 struct StateReference
 {
@@ -95,6 +97,7 @@ void LoadANEOS(struct ANEOSTable *_t, FILE *fp);
 void ANEOSInitStateRef(struct ANEOSTable *_t, struct StateReference *_s);
 double ANEOSInterpolateTD(struct ANEOSTable *_t,double tTem, double tDen, int DataId);
 double ANEOSInterpolateTP(struct ANEOSTable *_t, double tTem, double tPre, int DataId);
+void ANEOSWrite(struct ANEOSTable * _t,const char fname[], const char comment[]);
 
 struct AirEOSTable
 {
@@ -150,5 +153,6 @@ void Over(FILE * fp,int n);
 double Max(double a, double b);
 double Min(double a, double b);
 
+void ANEOSLowDenCorrect(struct ANEOSTable * _t, double plimit);
 
 #endif //EOSTOOL_EOS_STATE_H
