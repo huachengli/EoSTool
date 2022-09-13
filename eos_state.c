@@ -44,6 +44,12 @@ inline double Min(double a, double b)
         return b;
 }
 
+inline double Sqrt_trunc(double x)
+{
+    if(x < 0.) x = 0.;
+    return sqrt(x);
+}
+
 
 void AllocateANEOS(struct ANEOSTable *_t)
 {
@@ -292,11 +298,13 @@ double TillCold(const struct TillotsonTable * _t, double EngIn, double RhoIn, do
     double TillMu  = TillEta - 1.0;
     double TillPhi0 = EngIn/(_t->TLE0*TillEta*TillEta);
     double TillPhi1 = 1.0/(TillPhi0 + 1.0);
-    *Pres   = (_t->TLa + _t->TLb*TillPhi1)*EngIn*RhoIn + _t->TLA*TillMu + _t->TLB*TillMu*TillMu;
+    double temp_B = TillEta < 1.0 ? _t->TLA : _t->TLB;
 
-    double CsSquare1 = (1.0/_t->TLRho0)*(_t->TLA + 2.0*_t->TLB*TillMu) + EngIn*(_t->TLa + _t->TLb*TillPhi1*(3.0 - 2.0*TillPhi1));
+    *Pres   = (_t->TLa + _t->TLb*TillPhi1)*EngIn*RhoIn + _t->TLA*TillMu + temp_B*TillMu*TillMu;
+
+    double CsSquare1 = (1.0/_t->TLRho0)*(_t->TLA + 2.0*temp_B*TillMu) + EngIn*(_t->TLa + _t->TLb*TillPhi1*(3.0 - 2.0*TillPhi1));
     double CsSquare2 = (_t->TLa + _t->TLb*TillPhi1*TillPhi1)*(*Pres)/RhoIn;
-    *Cs = sqrt(CsSquare1 + CsSquare2);
+    *Cs = Sqrt_trunc(CsSquare1 + CsSquare2);
 
     return *Cs;
 }
@@ -324,7 +332,7 @@ double TillHot(const struct TillotsonTable * _t, double EngIn, double RhoIn, dou
     double CsSquare1 = _t->TLa*EngIn + _t->TLb*EngIn*TillPhi1*(3.0 + 2.0*_t->TLAlpha*TillXi/TillEta - 2.0*TillPhi1)*Exp_A2
                        + _t->TLA/_t->TLRho0*(1.0 - (TillXi/TillEta)*(_t->TLBeta+ 2.0*_t->TLAlpha*TillXi))*Exp_A2*Exp_B1;
     double CsSquare2 = (_t->TLa + _t->TLb*TillPhi1*TillPhi1*Exp_A2)*(*Pres)/RhoIn;
-    *Cs = sqrt(CsSquare1 + CsSquare2);
+    *Cs = Sqrt_trunc(CsSquare1 + CsSquare2);
 
     return *Cs;
 }
@@ -375,7 +383,7 @@ double TillTran(const struct TillotsonTable * _t, double EngIn, double RhoIn, do
 
     double CsSquare1 = (TilldEl*Cs2Cold + TilldEr*Cs2Hot)/TillETran;
     double CsSquare2 = (PresHot - PresCold)/TillETran * (*Pres)/(RhoIn * RhoIn);
-    *Cs = sqrt(CsSquare1 + CsSquare2);
+    *Cs = Sqrt_trunc(CsSquare1 + CsSquare2);
 
     return *Cs;
 }
@@ -392,14 +400,30 @@ double TillPres(const struct TillotsonTable * _t, double EngIn, double RhoIn, do
         TillTran(_t,EngIn,RhoIn,Pres,Cs);
 
     if(fabs(*Pres) <= 1.0e-2)
-        *Cs = sqrt(_t->TLA/_t->TLRho0);
+        *Cs = Sqrt_trunc(_t->TLA/_t->TLRho0);
     return *Cs;
 }
+
+double TillPres_split(const struct TillotsonTable * _t, double EngIn, double RhoIn, double * Pres, double * Cs)
+{
+
+    if((RhoIn >= _t->TLRho0) || (EngIn < _t->TLEiv))
+        TillCold(_t,EngIn,RhoIn,Pres,Cs);
+    else if(EngIn > _t->TLEcv)
+        TillHot(_t,EngIn,RhoIn,Pres,Cs);
+    else
+        TillTran(_t,EngIn,RhoIn,Pres,Cs);
+
+    if(fabs(*Pres) <= 1.0e-2)
+        *Cs = Sqrt_trunc(_t->TLA/_t->TLRho0);
+    return *Cs;
+}
+
 
 double TilldEdr(const struct TillotsonTable * _t, double EngIn, double RhoIn)
 {
     double tCs,tPres;
-    TillPres(_t,EngIn,RhoIn,&tPres,&tCs);
+    TillPres_split(_t,EngIn,RhoIn,&tPres,&tCs);
     return tPres/(RhoIn*RhoIn);
 }
 
@@ -534,7 +558,7 @@ double TillEOSInterpolateTD(struct TillotsonTable *_t, double tTem, double tDen,
 
 
     double LMPre,LMCs;
-    TillPres(_t,LMEng,tDen,&LMPre,&LMEng);
+    TillPres(_t,LMEng,tDen,&LMPre,&LMCs);
 
     if(-1==DataId)
         return tDen;

@@ -2,18 +2,15 @@
 #include <unistd.h>
 #include "test.h"
 
-int main__()
-{
-    double test_num = -.100000000000E+11;
 
-    char test_str[30];
-    special_scientific_notation(test_str,20,12,test_num);
-    printf("%s",test_str);
-    return 0;
+int m_main()
+{
+    FILE * fp = fopen("gabbro.cs.till","w");
+    test_tillotson(fp,"../data/gabbro1.tillotson");
+    fclose(fp);
 }
 
-
-int main()
+int l_main()
 {
 
     // an example for aneos
@@ -58,13 +55,19 @@ int main()
             double kDen = 200.0 + 200.0*k;
             double jTmp = 275.0 + 200.0*j;
             double rPre1 = ANEOSInterpolateTD(eos_test+0,jTmp,kDen,ANEOSPRE);
-            double rPre2 = ANEOSInterpolateTD(eos_test+1,jTmp,kDen,ANEOSPRE);
+            double rPre2 = ANEOSInterpolateTD(eos_test+1,jTmp,kDen,ANEOSCSD);
 
-            fprintf(stdout,"%13.5e,",rPre2-rPre1);
+            fprintf(stdout,"%13.5e,",rPre2);
         }
         fprintf(stdout,"\n");
     }
 
     UnAllocateANEOS(eos_test);
     return 0;
+}
+
+
+int main()
+{
+
 }

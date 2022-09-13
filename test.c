@@ -45,14 +45,13 @@ int test_tillotson(FILE * output,const char * tname)
     FILE * fp = fopen(tname,"r");
     LoadTillEOS(&eos_test,fp);
 
-    double check = TillEOSInterpolateTD(&eos_test,1500,300,ANEOSPRE);
     for(int k=0;k<21;k++)
     {
         for(int j=0;j<22;j++)
         {
-            double kDen = 200.0 + 200.0*k;
+            double kDen = 5.0 + 200.0*k;
             double jTmp = 275.0 + 200.0*j;
-            double rPre = TillEOSInterpolateTD(&eos_test,jTmp,kDen,ANEOSPRE);
+            double rPre = TillEOSInterpolateTD(&eos_test,jTmp,kDen,ANEOSCSD);
             fprintf(output,"%13.5e,",rPre);
         }
         fprintf(output,"\n");
@@ -61,6 +60,9 @@ int test_tillotson(FILE * output,const char * tname)
     UnAllocateTillEOS(&eos_test);
     return 0;
 }
+
+
+
 
 void test_pressure(struct ANEOSTable * _a,FILE * output,char * fmt, int lines)
 {

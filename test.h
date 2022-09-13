@@ -11,6 +11,7 @@ int test_tillotson(FILE * output, const char *);
 int test_aneos(FILE * output, const char * aname, int correct);
 
 void test_pressure(struct ANEOSTable * _a,FILE * output,char * fmt, int lines);
+void test_pressure_example();
 void generate_aneos(const char * aname, int correct, const char * cname, const char *comment);
 void special_scientific_notation(char * dst,unsigned int w,unsigned int d,double num);
 void fspecial_scientific_notation(FILE * fp, int w, int d,double num);

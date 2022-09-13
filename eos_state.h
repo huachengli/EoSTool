@@ -137,6 +137,8 @@ struct TillotsonTable
 };
 
 double TillPres(const struct TillotsonTable * _t, double EngIn, double RhoIn, double * Pres, double * Cs);
+double TillPres_split(const struct TillotsonTable * _t, double EngIn, double RhoIn, double * Pres, double * Cs);
+
 double TillTemp(const struct TillotsonTable * _t,double EngIn, double RhoIn);
 
 void TillColdEnergy(struct TillotsonTable * _t);
@@ -152,7 +154,7 @@ double Wind(double x, double limitL, double limitR);
 void Over(FILE * fp,int n);
 double Max(double a, double b);
 double Min(double a, double b);
-
+double Sqrt_trunc(double x);
 void ANEOSLowDenCorrect(struct ANEOSTable * _t, double plimit);
 
 #endif //EOSTOOL_EOS_STATE_H
