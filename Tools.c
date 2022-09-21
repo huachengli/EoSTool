@@ -90,7 +90,7 @@ void GenerateANEOSfTill(const char *_aname,const char * _atype,const char *_sour
     LoadTillEOS(&eos_source,source_fp);
 
     // gerenate aneos
-    ANEOSBuildWithTill(&eos_target,eos_source);
+    ANEOSBuildWithTill(&eos_target,&eos_source);
 
     // write into file
     ANEOSWrite(&eos_target,_aname,comment);

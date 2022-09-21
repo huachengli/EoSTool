@@ -1,9 +1,60 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "test.h"
+#include "Tools.h"
 
 
-int m_main()
+int main()
+{
+    // convert tillotson to aneos
+    const char aname[][30] = {
+            "../data/gabbro1.aneos",
+            "../data/granit2.aneos",
+            "../data/gabbro1.tillotson"
+    };
+
+    const char comment[] = "original version is iSALE2D/dunite_.aneos";
+    GenerateANEOSfTill(aname[0],aname[1],aname[2],comment);
+
+    FILE * fp = fopen(aname[0],"r");
+    struct ANEOSTable eos_test;
+    LoadANEOS(&eos_test,fp);
+    FILE * out = fopen("gabbro1.cs","w");
+    test_aneos_data(&eos_test,out,"%12.5e,",ANEOSCSD);
+    UnAllocateANEOS(&eos_test);
+    fclose(out);
+}
+
+int bh__main()
+{
+    // compare tillotson f90 and c implementation
+    const char * _source = "../data/gabbro1.tillotson";
+    struct TillotsonTable * eos_source;
+    int tillindex = 1;
+    FILE * source_fp = fopen(_source,"r");
+    get_tilltable(&tillindex,&eos_source);
+    LoadTillEOS(eos_source,source_fp);
+    tillotson_initialize(&tillindex);
+
+    for(int k=0;k<21;k++)
+    {
+//        fprintf(stdout,"{Density = %lf}",5.0 + 200.0*k);
+        for(int j=0;j<22;j++)
+        {
+            double kDen = 5.0 + 200.0*k;
+            double jTmp = 275.0 + 200.0*j;
+            double rPre1 = TillEOSInterpolateTD(eos_source,jTmp,kDen,ANEOSCSD);
+            double rPre2 = isale_tillotson_interpolateTD(tillindex,jTmp,kDen,ANEOSCSD);
+            fprintf(stdout,"[(SALEc)%13.5e,(isale)%13.5e,%13.5e]",rPre1,rPre2,(rPre1 - rPre2)/(rPre2+1.0e-2));
+//            fprintf(stdout,"%13.5e",rPre2);
+
+        }
+        fprintf(stdout,"\n");
+    }
+
+}
+
+int test_tillotson_main()
 {
     FILE * fp = fopen("gabbro.cs.till","w");
     test_tillotson(fp,"../data/gabbro1.tillotson");
@@ -64,10 +115,4 @@ int l_main()
 
     UnAllocateANEOS(eos_test);
     return 0;
-}
-
-
-int main()
-{
-
 }

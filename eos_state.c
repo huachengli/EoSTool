@@ -46,8 +46,10 @@ inline double Min(double a, double b)
 
 inline double Sqrt_trunc(double x)
 {
-    if(x < 0.) x = 0.;
-    return sqrt(x);
+    if(x < 1.0e-2)
+        return -sqrt(fabs(x));
+    else
+        return sqrt(x);
 }
 
 
@@ -345,8 +347,8 @@ double TillTran(const struct TillotsonTable * _t, double EngIn, double RhoIn, do
      */
 
     double TillETran = _t->TLEcv - _t->TLEiv;
-    double TilldEl   = EngIn - _t->TLEiv;
-    double TilldEr   = _t->TLEcv - EngIn;
+    double TilldEr   = EngIn - _t->TLEiv;
+    double TilldEl   = _t->TLEcv - EngIn;
 
     double TillEta = RhoIn/_t->TLRho0;
     double TillMu  = TillEta - 1.0;
@@ -354,7 +356,9 @@ double TillTran(const struct TillotsonTable * _t, double EngIn, double RhoIn, do
     double TillPhi1 = 1.0/(TillPhi0 + 1.0);
     double TillXi  = _t->TLRho0/RhoIn - 1.0;
 
-    double PresCold = (_t->TLa + _t->TLb*TillPhi1)*EngIn*RhoIn + _t->TLA*TillMu + _t->TLB*TillMu*TillMu;
+    double temp_B = TillEta < 1.0 ? _t->TLA : _t->TLB;
+
+    double PresCold = (_t->TLa + _t->TLb*TillPhi1)*EngIn*RhoIn + _t->TLA*TillMu + temp_B*TillMu*TillMu;
 
     double Exp_A2   = 0.0;
     if(_t->TLAlpha*TillXi*TillXi < 100.0)
@@ -371,7 +375,7 @@ double TillTran(const struct TillotsonTable * _t, double EngIn, double RhoIn, do
 
     *Pres = (TilldEl*PresCold + TilldEr*PresHot)/TillETran;
 
-    double CsColdSquare1 = (1.0/_t->TLRho0)*(_t->TLA + 2.0*_t->TLB*TillMu) + EngIn*(_t->TLa + _t->TLb*TillPhi1*(3.0 - 2.0*TillPhi1));
+    double CsColdSquare1 = (1.0/_t->TLRho0)*(_t->TLA + 2.0*temp_B*TillMu) + EngIn*(_t->TLa + _t->TLb*TillPhi1*(3.0 - 2.0*TillPhi1));
     double CsColdSquare2 = (_t->TLa + _t->TLb*TillPhi1*TillPhi1)*(*Pres)/RhoIn;
 
     double CsHotSquare1 = _t->TLa*EngIn + _t->TLb*EngIn*TillPhi1*(3.0 + 2.0*_t->TLAlpha*TillXi/TillEta - 2.0*TillPhi1)*Exp_A2
@@ -399,7 +403,7 @@ double TillPres(const struct TillotsonTable * _t, double EngIn, double RhoIn, do
     else
         TillTran(_t,EngIn,RhoIn,Pres,Cs);
 
-    if(fabs(*Pres) <= 1.0e-2)
+    if(*Pres <= 1.0e-2)
         *Cs = Sqrt_trunc(_t->TLA/_t->TLRho0);
     return *Cs;
 }
@@ -414,7 +418,7 @@ double TillPres_split(const struct TillotsonTable * _t, double EngIn, double Rho
     else
         TillTran(_t,EngIn,RhoIn,Pres,Cs);
 
-    if(fabs(*Pres) <= 1.0e-2)
+    if(*Pres <= 1.0e-2)
         *Cs = Sqrt_trunc(_t->TLA/_t->TLRho0);
     return *Cs;
 }
@@ -430,7 +434,7 @@ double TilldEdr(const struct TillotsonTable * _t, double EngIn, double RhoIn)
 void TillColdEnergy(struct TillotsonTable * _t)
 {
     double RefDen = _t->TLRho0;
-    double MaxDen = _t->TLRho0*15.0;
+    double MaxDen = _t->TLRho0*10.0;
     int nDen = _t->nDen;
     double StepDen = MaxDen/(nDen-1);
     double * xDen = (double *) malloc(sizeof(double)*nDen);
@@ -441,23 +445,39 @@ void TillColdEnergy(struct TillotsonTable * _t)
         yEng[k] = 0.0;
     }
 
-    int IndexM = (int)(floor(RefDen/MaxDen*nDen)+1);
-    double K1,K2,K3;
+    int IndexM = (int)(floor(RefDen/MaxDen*nDen));
+
+    xDen[IndexM] = _t->TLRho0;
+    yEng[IndexM] = 0.0;
+
+    double K1,K2,K3,K4;
     for(int k=IndexM+1;k<nDen;k++)
     {
-        K1 = TilldEdr(_t,yEng[k-1]                  ,xDen[k-1]);
+        StepDen = xDen[k] - xDen[k-1];
+//        K1 = TilldEdr(_t,yEng[k-1]                  ,xDen[k-1]);
+//        K2 = TilldEdr(_t,yEng[k-1] + 0.50*K1*StepDen,xDen[k-1]+0.50*StepDen);
+//        K3 = TilldEdr(_t,yEng[k-1] + 0.75*K2*StepDen,xDen[k-1]+0.75*StepDen);
+//        yEng[k] = yEng[k-1] + (2.0*K1 + 3.0*K2 + 4.0*K3)*StepDen/9.0;
+
+        K1 = TilldEdr(_t,yEng[k-1],xDen[k-1]);
         K2 = TilldEdr(_t,yEng[k-1] + 0.50*K1*StepDen,xDen[k-1]+0.50*StepDen);
-        K3 = TilldEdr(_t,yEng[k-1] + 0.75*K2*StepDen,xDen[k-1]+0.75*StepDen);
-        yEng[k] = yEng[k-1] + (2.0*K1 + 3.0*K2 + 4.0*K3)*StepDen/9.0;
+        K3 = TilldEdr(_t,yEng[k-1] + 0.50*K2*StepDen,xDen[k-1]+0.50*StepDen);
+        K4 = TilldEdr(_t,yEng[k-1] +      K3*StepDen,xDen[k-1]+     StepDen);
+        yEng[k] = yEng[k-1] + (K1 + 2.0*K2 + 2.0*K3 + K4)*StepDen/6.0;
     }
 
-    StepDen *= -1.0;
     for(int k=IndexM-1;k>=1;k--)
     {
+        StepDen = xDen[k] - xDen[k+1];
+//        K1 = TilldEdr(_t,yEng[k+1],xDen[k+1]);
+//        K2 = TilldEdr(_t,yEng[k+1] + 0.50*K1*StepDen,xDen[k+1]+0.50*StepDen);
+//        K3 = TilldEdr(_t,yEng[k+1] + 0.75*K2*StepDen,xDen[k+1]+0.75*StepDen);
+//        yEng[k] = yEng[k+1] + (2.0*K1 + 3.0*K2 + 4.0*K3)*StepDen/9.0;
         K1 = TilldEdr(_t,yEng[k+1],xDen[k+1]);
         K2 = TilldEdr(_t,yEng[k+1] + 0.50*K1*StepDen,xDen[k+1]+0.50*StepDen);
-        K3 = TilldEdr(_t,yEng[k+1] + 0.75*K2*StepDen,xDen[k+1]+0.75*StepDen);
-        yEng[k] = yEng[k+1] + (2.0*K1 + 3.0*K2 + 4.0*K3)*StepDen/9.0;
+        K3 = TilldEdr(_t,yEng[k+1] + 0.50*K2*StepDen,xDen[k+1]+0.50*StepDen);
+        K4 = TilldEdr(_t,yEng[k+1] +      K3*StepDen,xDen[k+1]+     StepDen);
+        yEng[k] = yEng[k+1] + (K1 + 2.0*K2 + 2.0*K3 + K4)*StepDen/6.0;
     }
 
     yEng[0] = yEng[1];
@@ -593,6 +613,15 @@ double LoadTillEOS(struct TillotsonTable * _t, FILE * fp)
     _t->nDen = GetValueI(ifp,"ColdEnergy.RhoStep","1501");
     CloseInputFile(ifp);
     TillColdEnergy(_t);
+
+#ifdef F90_DEBUG
+    FILE * efp = fopen("salec_ec.txt","w");
+    fprintf(efp,"%d\n",_t->nDen);
+    for(int j=0;j<_t->nDen;++j)
+    {
+        fprintf(efp,"%27.9f,%27.9f\n",_t->xDen[j],_t->yEng[j]);
+    }
+#endif
 }
 
 void UnAllocateTillEOS(struct TillotsonTable *_t)

@@ -6,7 +6,7 @@
     BulkB   = 7.50e10
     E0    = 4.87e6
     Ta   = 0.50
-    Tb   = 0.145
+    Tb   = 1.50
     Alpha = 5.0
     Beta  = 5.0
     Eiv   = 4.72e6
@@ -15,4 +15,4 @@
 [ColdEnergy]
     Tref    = 293.0
     Cv      = 1.0e3
-    RhoStep = 3001
+    RhoStep = 10001

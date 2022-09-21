@@ -92,6 +92,33 @@ void test_pressure(struct ANEOSTable * _a,FILE * output,char * fmt, int lines)
     }
 }
 
+void test_aneos_data(struct ANEOSTable * _a,FILE * output,char * fmt,int dataid)
+{
+
+    fprintf(output,"%d,%d,",_a->nTem,_a->nDen);
+    fprintf(output,"\n");
+    for(int k=0;k<_a->nTem;++k)
+    {
+        fprintf(output,fmt,_a->xTem[k]);
+    }
+    fprintf(output,"\n");
+
+    for(int k=0;k<_a->nDen;++k)
+    {
+        fprintf(output,fmt,_a->yDen[k]);
+    }
+    fprintf(output,"\n");
+
+    for(int k=0;k<_a->nTem;++k)
+    {
+        for(int j=0;j<_a->nDen;++j)
+        {
+            fprintf(output,fmt,_a->Data[k][j][dataid]);
+        }
+        fprintf(output,"\n");
+    }
+}
+
 void test_pressure_example()
 {
     test_aneos(stdout,"../data/granit2.aneos",CONSTSHIFT);
@@ -216,3 +243,27 @@ void ANEOSWrite_2d(struct ANEOSTable * _t,const char fname[], const char comment
     fclose(fp);
 }
 
+double isale_tillotson_interpolateTD(int m,double tTem, double tDen,int DataId)
+{
+    double p_out,cs_out,sie_out,rt_value;
+    tillotson_rot(&m,&tDen,&tTem,&p_out,&sie_out,&cs_out);
+    switch (DataId) {
+        case ANEOSPRE:
+            rt_value = p_out;
+            break;
+        case ANEOSENG:
+            rt_value = sie_out;
+            break;
+        case ANEOSCSD:
+            rt_value = cs_out;
+            break;
+        case ANEOSDEN:
+            rt_value = tDen;
+            break;
+        default:
+            rt_value = 0.;
+            break;
+    }
+
+    return rt_value;
+}
